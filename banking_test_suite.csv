@@ -1,0 +1,57 @@
+Module,Test ID,Test Name,Description,Expected Result,Type
+Authentication,AUTH-01,Successful login with valid credentials,User enters correct username and password,Redirect to dashboard; session token issued,Happy path
+Authentication,AUTH-02,Successful biometric login,User authenticates via fingerprint/face ID,Dashboard loads within 2s,Happy path
+Authentication,AUTH-03,Successful logout,User clicks logout button,Session cleared; redirect to login page,Happy path
+Authentication,AUTH-04,Login with wrong password,User enters incorrect password,Error message shown; account not locked yet,Negative
+Authentication,AUTH-05,Account locked after 5 failed attempts,User fails login 5 times consecutively,Account locked; lockout email sent,Negative
+Authentication,AUTH-06,Login with empty credentials,User submits blank username/password fields,Validation errors shown inline,Negative
+Authentication,AUTH-07,Expired session redirect,User returns after session timeout,Redirect to login with session-expired message,Negative
+Authentication,AUTH-08,Simultaneous login from two devices,Same account logged in on mobile and desktop,Second device shown concurrent-session warning or first session invalidated per policy,Edge case
+Authentication,AUTH-09,Login with SQL injection in username,"Username field: ' OR '1'='1",Input sanitized; login rejected; no DB error exposed,Edge case
+Authentication,AUTH-10,Password with max-length boundary (128 chars),Password exactly at character limit,Login succeeds; no truncation,Edge case
+Account Management,ACCT-01,View account balance,Authenticated user opens account overview,"Current balance, available balance, and pending items displayed",Happy path
+Account Management,ACCT-02,View transaction history,User browses last 30 transactions,List sorted by date desc; amounts correctly signed,Happy path
+Account Management,ACCT-03,Download account statement (PDF),User requests statement for last month,PDF generated and downloaded with correct figures,Happy path
+Account Management,ACCT-04,Access another user's account,Manipulate account ID in API request,403 Forbidden; no data returned,Negative
+Account Management,ACCT-05,View closed account details,User navigates to a closed account,Account shown as closed; transactions read-only,Negative
+Account Management,ACCT-06,Account balance exactly $0.00,No funds in account,$0.00 shown correctly; no negative sign,Edge case
+Account Management,ACCT-07,Account with 10000+ transactions,User opens transaction history on a high-volume account,Pagination or virtual scroll; no timeout,Edge case
+Account Management,ACCT-08,Pending transaction flips to posted,Transaction changes state while user is viewing,UI refreshes or shows stale-data notice,Edge case
+Fund Transfers,XFER-01,Transfer between own accounts,Move $500 from checking to savings,"Both balances updated, confirmation shown, transaction recorded",Happy path
+Fund Transfers,XFER-02,Transfer to a saved payee,Send $200 to a previously saved external account,Transfer queued/completed; confirmation number issued,Happy path
+Fund Transfers,XFER-03,Schedule a future-dated transfer,Set transfer for 7 days from now,Scheduled transfer saved and visible in upcoming list,Happy path
+Fund Transfers,XFER-04,Cancel a scheduled transfer,User cancels future transfer before execution,Transfer removed from schedule; funds not moved,Happy path
+Fund Transfers,XFER-05,Transfer exceeds available balance,Attempt to transfer $10000 with $500 available,Error: insufficient funds; transfer blocked,Negative
+Fund Transfers,XFER-06,Transfer to invalid account number,Enter 13-digit account number (invalid format),Validation error before submission,Negative
+Fund Transfers,XFER-07,Transfer with amount of $0,Enter $0.00 in amount field,Validation error: amount must be greater than zero,Negative
+Fund Transfers,XFER-08,Transfer to a frozen recipient account,Recipient account is frozen at the bank,Transfer rejected; meaningful error returned,Negative
+Fund Transfers,XFER-09,Transfer of exactly $0.01,Minimum possible transfer amount,Transfer succeeds if above minimum threshold policy,Edge case
+Fund Transfers,XFER-10,Transfer of exactly the daily limit ($5000),Amount equals daily transfer cap,Transfer succeeds; next transfer of $0.01 blocked for the day,Edge case
+Fund Transfers,XFER-11,Network timeout mid-transfer,Connection drops after form submit before confirmation,Idempotency key prevents double debit; user shown retry option,Edge case
+Fund Transfers,XFER-12,Concurrent duplicate submission,User double-clicks submit button rapidly,Only one transfer processed; duplicate rejected,Edge case
+Bill Payments,BILL-01,Pay a registered biller,User pays utility bill for exact amount due,"Payment confirmed, biller receives funds, balance updated",Happy path
+Bill Payments,BILL-02,Set up autopay,User enables autopay for credit card minimum,Autopay saved; confirmation shown; next run date displayed,Happy path
+Bill Payments,BILL-03,Cancel autopay,User disables autopay for a biller,Autopay removed; no future payments scheduled,Happy path
+Bill Payments,BILL-04,Pay bill with insufficient funds,Bill amount exceeds checking balance,Payment blocked; overdraft offer shown if applicable,Negative
+Bill Payments,BILL-05,Submit payment to invalid biller ID,Biller ID tampered in request body,Payment rejected; error logged,Negative
+Bill Payments,BILL-06,Bill due today processed after cut-off time,User pays at 11:58 PM on due date,Payment posted next business day; late-fee risk surfaced to user,Edge case
+Bill Payments,BILL-07,Biller temporarily down at payment time,External biller API returns 503 during autopay,Payment retried per retry policy; user notified of delay,Edge case
+Card Management,CARD-01,Freeze a debit card,User toggles card to frozen state,Card frozen instantly; existing authorizations still settle,Happy path
+Card Management,CARD-02,Unfreeze a debit card,User toggles card back to active,Card active immediately; can be used for new transactions,Happy path
+Card Management,CARD-03,Report card lost and request replacement,User marks card lost and confirms replacement,"Old card voided, new card ordered, 5-7 day delivery shown",Happy path
+Card Management,CARD-04,Freeze another user's card,API call with different user's card ID,403 Forbidden,Negative
+Card Management,CARD-05,Report card lost when already reported,User submits lost-card request a second time,Idempotent response; no second replacement card ordered,Negative
+Card Management,CARD-06,Transaction attempted on frozen card,Merchant charges a frozen card,Transaction declined; user notified via push and email,Edge case
+Card Management,CARD-07,PIN change to same current PIN,New PIN identical to old PIN,Policy rejection: must choose a different PIN,Edge case
+Card Management,CARD-08,Virtual card number generation,User generates virtual card for online use,Unique 16-digit virtual PAN issued with correct expiry,Edge case
+Notifications & Alerts,NOTIF-01,Enable transaction push notifications,User opts in to push alerts,Notifications delivered within 30s of transaction posting,Happy path
+Notifications & Alerts,NOTIF-02,Set low-balance alert threshold,User sets alert at $100,Alert fires when balance drops below $100,Happy path
+Notifications & Alerts,NOTIF-03,Alert with invalid threshold ($-50),Negative value entered for alert amount,Validation error; negative threshold not saved,Negative
+Notifications & Alerts,NOTIF-04,Notification delivery when device is offline,Transaction posts while phone is in airplane mode,Notification delivered when device reconnects,Edge case
+Notifications & Alerts,NOTIF-05,High-volume notification burst (50+ in 1 min),Batch of transactions hits account simultaneously,Notifications batched or throttled; none dropped,Edge case
+Onboarding & KYC,ONBOARD-01,Complete KYC with valid documents,"User submits passport + selfie, OFAC/sanctions clear",Account approved and activated within SLA,Happy path
+Onboarding & KYC,ONBOARD-02,Onboarding with address verification,Utility bill submitted for proof of address,Address verified; recorded correctly,Happy path
+Onboarding & KYC,ONBOARD-03,Submit expired ID document,User uploads passport expired 2 years ago,Rejection with instruction to submit valid document,Negative
+Onboarding & KYC,ONBOARD-04,OFAC watchlist match,Applicant name/DOB matches sanctions list,Application flagged for manual review; account not opened,Negative
+Onboarding & KYC,ONBOARD-05,Document image too blurry to parse,OCR confidence below threshold,User prompted to retake photo with guidance,Edge case
+Onboarding & KYC,ONBOARD-06,Applicant with hyphenated surname,"Name: 'Smith-Jones' entered in single-name field",Name stored correctly; no truncation or error,Edge case
